@@ -94,9 +94,14 @@ function wpl_get_layouts($page_id)
 				continue;
 			}
 
+			$blocks = wpb_get_blocks($definition->ID);
+			$layout = array_shift($blocks);
+
 			$layouts[$block_id] = array(
 				'id' => $definition->ID,
 				'name' => $definition->post_title,
+				'blocks' => $blocks,
+				'layout' => $layout
 			);
 		}
 	}
@@ -110,22 +115,11 @@ function wpl_get_layouts($page_id)
  */
 function wpl_get_layout($page_id, $post_id)
 {
-	$layouts = wpl_get_layouts($page_id);
-	return isset($layouts[$post_id]) ? $layouts[$post_id] : null;
-}
+	static $layouts = null;
 
-/**
- * @function wpl_layout_is_type
- * @since 1.0.0
- */
-function wpl_layout_is_type($page, $buid)
-{
-	foreach (wpb_get_blocks($page->ID) as $block) {
-		if ($block['buid'] === $buid) {
-			return true;
-		}
+	if ($layouts == null) {
+		$layouts = wpl_get_layouts($page_id);
 	}
 
-	return false;
+	return isset($layouts[$post_id]) ? $layouts[$post_id] : null;
 }
-

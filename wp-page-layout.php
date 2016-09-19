@@ -218,11 +218,10 @@ add_filter('wpb/block_preview_header', function($header, $block) {
 			?>
 
 			<label>Inherits:</label>
-
 			<select name="_wpl_layouts[<?php echo $block->get_post_id() ?>]">
 				<option value="">Do not inherit an existing layout</option>
 				<?php foreach ($layouts as $layout) : ?>
-					<option <?php $layout['selected'] ? 'selected="selected"' : '' ?> value="<?php echo $layout['id'] ?>">
+					<option <?php echo $layout['selected'] ? 'selected="selected"' : '' ?> value="<?php echo $layout['id'] ?>">
 						<?php echo $layout['name'] ?>
 					</option>
 				<?php endforeach ?>
@@ -244,9 +243,97 @@ add_filter('wpb/block_preview_header', function($header, $block) {
  * @filter wpb/block_preview_footer
  * @since 1.0.0
  */
-add_filter('wpb/block_preview_footer', function($footer, $block_template_info) {
+add_filter('wpb/block_preview_footer', function($footer, $block) {
 
 	return $footer;
+
+}, 10, 2);
+
+/**
+ * @filter wpb/children_blocks
+ * @since 1.0.0
+ */
+add_filter('wpb/children_blocks', function($blocks, $block) {
+
+	if (get_post_type() === 'page') {
+
+		if ($block->infos['category'] === 'Layout') {
+
+			$layout = wpl_get_layout(
+				$block->get_page_id(),
+				$block->get_post_id()
+			);
+
+			if (isset($layout['blocks'])) {
+
+				foreach ($layout['blocks'] as $child) {
+					$child['into_id'] = $block->get_post_id();
+					$child['disable'] = true;
+					$blocks[] = $child;
+				}
+
+				$ordered_blocks = array();
+				$ordered_offset = 0;
+
+				foreach ($blocks as $index => $block) {
+
+					$position = isset($block['position']) ? $block['position'] : null;
+
+					if ($position !== null) {
+
+						if (isset($ordered_blocks[$position])) {
+
+							$ordered_blocks = array_merge(
+								array_slice($ordered_blocks, 0, $position), array($block),
+								array_slice($ordered_blocks, $position)
+							);
+
+							continue;
+						}
+
+						$ordered_blocks[$position] = $block;
+
+						continue;
+					}
+
+					while (isset($ordered_blocks[$ordered_offset])) {
+						$ordered_offset++;
+					}
+
+					$ordered_blocks[$ordered_offset] = $block;
+				}
+
+				ksort($ordered_blocks);
+
+				$blocks = $ordered_blocks;
+			}
+		}
+	}
+
+	return $blocks;
+
+}, 10, 2);
+
+/**
+ * @filter wpb/render
+ * @since 1.0.0
+ */
+add_filter('wpb/render', function($render, $block) {
+
+	if (get_post_type() === 'page') {
+
+		if ($block->infos['category'] === 'Layout') {
+
+			$layout = wpl_get_layout(
+				$block->get_page_id(),
+				$block->get_post_id()
+			);
+
+			return $content . $render;
+		}
+	}
+
+	return $render;
 
 }, 10, 2);
 
@@ -256,6 +343,27 @@ add_filter('wpb/block_preview_footer', function($footer, $block_template_info) {
  */
 add_action('wpb/save_block', function($page_id, $page_blocks) {
 
-	update_post_meta($page_id, '_wpl_layouts', isset($_POST['_wpl_layouts']) ? $_POST['_wpl_layouts'] : array());
+	if (get_post_type() === 'page') {
+
+		$blocks = isset(
+			$_POST['_wpb_blocks']
+		) ? $_POST['_wpb_blocks'] : array();
+
+		foreach ($blocks as $position => $post_id) {
+			foreach ($page_blocks as &$page_block) {
+				if ($page_block['post_id'] == $post_id) {
+					$page_block['position'] = $position;
+				}
+			}
+		}
+
+		update_post_meta($page_id, '_wpb_blocks', $page_blocks);
+	}
+
+	$layouts = isset(
+		$_POST['_wpl_layouts']
+	) ? $_POST['_wpl_layouts'] : array();
+
+	update_post_meta($page_id, '_wpl_layouts', $layouts);
 
 }, 10, 2);
