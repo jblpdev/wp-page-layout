@@ -4,8 +4,8 @@ $(document).on('ready', function() {
 
 	var element = $('#acf-field_57dab64ad6e4a')
 
-	var block = $('#wpb_block_builder_metabox .blocks .block:first-child')
-	var blocks = $('#wpb_block_builder_metabox .blocks')
+	var block = $('#wpb_block_metabox .blocks .block:first-child')
+	var blocks = $('#wpb_block_metabox .blocks')
 
 	if (block.length) {
 
@@ -22,7 +22,7 @@ $(document).on('ready', function() {
 
 		if (block.length == 0) {
 
-			wpbAppendBlock(blocks, buid, null, null, function(result) {
+			wpb_appendBlock(blocks, buid, null, null, function(result) {
 				block = result
 			})
 
@@ -32,7 +32,7 @@ $(document).on('ready', function() {
 		var postId = block.attr('data-post-id')
 		var pageId = block.attr('data-page-id')
 
-		wpbReplaceBlock(postId, buid, function(result) {
+		wpb_replaceBlock(postId, buid, function(result) {
 			block = result
 		})
 	})

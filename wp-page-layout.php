@@ -150,25 +150,39 @@ add_action('admin_enqueue_scripts', function() {
 //------------------------------------------------------------------------------
 
 /**
- * @filter wpb/block_builder_metabox_context
+ * @filter wpb/block_context
  * @since 1.0.0
  */
-add_filter('wpb/block_builder_metabox_context', function($context) {
+add_filter('wpb/block_context', function($context) {
 	$context[] = 'wpl-layout';
 	return $context;
 });
 
 /**
- * @filter wpb/block_builder_metabox_title
+ * @filter wpb/block_metabox_title
  * @since 1.0.0
  */
-add_filter('wpb/block_builder_metabox_title', function($title, $post_type) {
+add_filter('wpb/block_metabox_title', function($title, $post_type) {
 
 	if ($post_type == 'wpl-layout') {
 		return 'Customize';
 	}
 
 	return $title;
+
+}, 10, 2);
+
+/**
+ * @filter wpb/block_metabox_priority
+ * @since 1.0.0
+ */
+add_filter('wpb/block_metabox_priority', function($priority, $post_type) {
+
+	if ($post_type == 'wpl-layout') {
+		return 'high';
+	}
+
+	return $priority;
 
 }, 10, 2);
 
@@ -219,7 +233,7 @@ add_filter('wpb/block_preview_header', function($header, $block) {
 
 			<label>Inherits:</label>
 			<select name="_wpl_layouts[<?php echo $block->get_post_id() ?>]">
-				<option value="">Do not inherit an existing layout</option>
+				<option>Do not inherit an existing layout</option>
 				<?php foreach ($layouts as $layout) : ?>
 					<option <?php echo $layout['selected'] ? 'selected="selected"' : '' ?> value="<?php echo $layout['id'] ?>">
 						<?php echo $layout['name'] ?>
@@ -292,7 +306,6 @@ add_filter('wpb/children_blocks', function($blocks, $block) {
 						}
 
 						$ordered_blocks[$position] = $block;
-
 						continue;
 					}
 
